@@ -1,0 +1,13 @@
+# SwiftPM build output
+.build/
+# App bundle produced by build.sh
+build/
+
+# SwiftPM / Xcode local state (created when opening Package.swift in Xcode)
+.swiftpm/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# macOS
+.DS_Store
