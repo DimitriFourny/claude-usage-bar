@@ -1,6 +1,7 @@
 # Claude Usage Bar
 
-A small macOS menu bar app that shows how much of your Claude subscription quota is left:
+A small macOS menu bar app that shows how much of your Claude subscription quota is left, next to
+Clawd, Claude Code's pixel mascot:
 
 ```
 5h 72% · 7d 39%
@@ -90,6 +91,7 @@ Sources/ClaudeUsageBar/
   UsagePopover.swift               SwiftUI detail panel
   UsageModel.swift                 state, polling, token refresh, sign-in/out
   UsageLevel.swift                 25% / 10% thresholds and colors
+  Clawd.swift                      Clawd mascot shown left of the numbers
   ClaudeAPI.swift                  usage request and response parsing
   ClaudeOAuth.swift                browser OAuth (PKCE + loopback listener), token refresh
   Keychain.swift                   credential storage via /usr/bin/security

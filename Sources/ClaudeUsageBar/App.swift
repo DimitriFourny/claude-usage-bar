@@ -29,6 +29,8 @@ final class StatusItemController: NSObject {
         popover.behavior = .transient
         item.button?.target = self
         item.button?.action = #selector(togglePopover)
+        item.button?.image = .clawd
+        item.button?.imagePosition = .imageLeading
         updateTitle()
     }
 
