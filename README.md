@@ -7,7 +7,7 @@ Clawd, Claude Code's pixel mascot:
   <img src="docs/screenshot.png" width="353" alt="Menu bar showing Clawd, 5h 17% · 7d 14%, with the usage panel open">
 </p>
 
-- **5h**: what's left of the current 5-hour session window.
+- **5h**: what's left of the current 5-hour session window (hidden on plans without a session limit).
 - **7d**: what's left of the weekly limit (all models).
 
 A number turns **light orange** below 25% left and **light red** below 10%. A `⚠︎` means the last

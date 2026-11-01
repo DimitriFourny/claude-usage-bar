@@ -53,14 +53,18 @@ final class StatusItemController: NSObject {
             append("Claude: sign in")
             return result
         }
-        guard let fiveHour = model.fiveHour, let weekly = model.weekly else {
+        // Some plans have no 5-hour session limit (`five_hour: null`): show only the windows that exist.
+        let headline = [("5h", model.fiveHour), ("7d", model.weekly)].compactMap { label, window in
+            window.map { (label, $0) }
+        }
+        guard !headline.isEmpty else {
             append(model.error == nil ? "Claude …" : "Claude ⚠︎")
             return result
         }
-        append("5h ")
-        append(UsageModel.percent(fiveHour.remaining), color: UsageLevel(remaining: fiveHour.remaining).menuBarColor)
-        append(" · 7d ")
-        append(UsageModel.percent(weekly.remaining), color: UsageLevel(remaining: weekly.remaining).menuBarColor)
+        for (index, (label, window)) in headline.enumerated() {
+            append(index == 0 ? "\(label) " : " · \(label) ")
+            append(UsageModel.percent(window.remaining), color: UsageLevel(remaining: window.remaining).menuBarColor)
+        }
         if model.error != nil { append(" ⚠︎") }
         return result
     }
