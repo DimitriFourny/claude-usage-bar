@@ -6,6 +6,7 @@ import ServiceManagement
 @Observable
 final class UsageModel {
     private(set) var windows: [UsageWindow] = []
+    private(set) var extraUsage: ExtraUsage?
     private(set) var lastUpdated: Date?
     private(set) var error: String?
     private(set) var isRefreshing = false
@@ -63,6 +64,7 @@ final class UsageModel {
                 Keychain.save(credentials)
                 self.credentials = credentials
                 windows = []
+                extraUsage = nil
                 lastUpdated = nil
                 restartLoop()
             } catch is CancellationError {
@@ -83,6 +85,7 @@ final class UsageModel {
         Keychain.delete()
         credentials = nil
         windows = []
+        extraUsage = nil
         lastUpdated = nil
         error = nil
         loop?.cancel()
@@ -126,7 +129,7 @@ final class UsageModel {
         defer { isRefreshing = false }
         do {
             if current.needsRefresh { current = try await refreshCredentials(current) }
-            let result: [UsageWindow]
+            let result: UsageReport
             do {
                 result = try await ClaudeAPI.usage(accessToken: current.accessToken)
             } catch ClaudeAPIError.unauthorized {
@@ -135,7 +138,8 @@ final class UsageModel {
                 result = try await ClaudeAPI.usage(accessToken: current.accessToken)
             }
             guard credentials?.refreshToken == current.refreshToken else { return }
-            windows = result
+            windows = result.windows
+            extraUsage = result.extraUsage
             lastUpdated = Date()
             error = nil
         } catch OAuthError.signInExpired {

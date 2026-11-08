@@ -17,6 +17,13 @@ Click the item for details:
 
 - each limit reported by Claude (session, weekly, and any per-model weekly caps such as Opus), with a
   usage bar, % used, and when it resets ("Resets in 3h 44m · 21:59")
+- a pace forecast per limit, from your average rate since the window started: either when you'd hit
+  0% left if you keep going like this ("At this pace: empty in 1h 13m, 1h 46m before reset", in
+  orange), or how much you'd have used by the reset ("At this pace: ~70% used at reset"). Shown once
+  the window has enough history (15 minutes for the session, a few hours for the week).
+- **Extra usage** (pay-as-you-go credits used once you hit your plan limits): *Off*, or what's been
+  spent this month against your monthly spend limit, with % left and a bar, *Limit reached* when it's
+  used up, and any prepaid credit balance
 - the signed-in account and organization, and when the data was last updated
 - Refresh, a link to claude.ai's usage page, *Launch at login*, and a gear menu (switch account,
   sign out, quit)

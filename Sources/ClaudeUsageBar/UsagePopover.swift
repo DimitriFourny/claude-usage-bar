@@ -35,6 +35,7 @@ struct UsagePopover: View {
             } else {
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(model.windows) { UsageRow(window: $0, now: now) }
+                    if let extraUsage = model.extraUsage { ExtraUsageRow(extra: extraUsage) }
                 }
             }
 
@@ -115,17 +116,7 @@ private struct UsageRow: View {
                     .monospacedDigit()
                     .foregroundStyle(color)
             }
-            // Drawn by hand: ProgressView ignores `.tint` when the popover isn't the key window.
-            Capsule()
-                .fill(.quaternary)
-                .frame(height: 6)
-                .overlay(alignment: .leading) {
-                    GeometryReader { geometry in
-                        Capsule()
-                            .fill(color)
-                            .frame(width: geometry.size.width * min(window.utilization, 100) / 100)
-                    }
-                }
+            UsageBar(utilization: window.utilization, color: color)
             HStack {
                 Text("\(UsageModel.percent(window.utilization)) used")
                 Spacer()
@@ -134,7 +125,28 @@ private struct UsageRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             .monospacedDigit()
+            if let pace = window.pace(now: now) { paceText(pace) }
         }
+    }
+
+    /// Extrapolates the average rate since the window started, so you know whether to slow down or have room left.
+    @ViewBuilder
+    private func paceText(_ pace: Pace) -> some View {
+        Group {
+            switch pace {
+            case .runsOut(let at, let beforeReset):
+                Label("At this pace: empty in \(shortDuration(at.timeIntervalSince(now))), \(shortDuration(beforeReset)) before reset",
+                      systemImage: "gauge.with.dots.needle.100percent")
+                    .foregroundStyle(Color(nsColor: .usageLightOrange))
+            case .lasts(let usedAtReset):
+                Label("At this pace: ~\(UsageModel.percent(min(usedAtReset, 100))) used at reset",
+                      systemImage: "gauge.with.dots.needle.33percent")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .font(.caption)
+        .monospacedDigit()
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var color: Color {
@@ -148,6 +160,88 @@ private struct UsageRow: View {
             ? .dateTime.hour().minute()
             : .dateTime.weekday(.abbreviated).hour().minute()
         return "Resets in \(shortDuration(seconds)) · \(date.formatted(style))"
+    }
+}
+
+private struct ExtraUsageRow: View {
+    let extra: ExtraUsage
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Extra usage").font(.subheadline.weight(.semibold))
+                Spacer()
+                Group {
+                    if !extra.isEnabled {
+                        Text("Off").foregroundStyle(.secondary)
+                    } else if let remaining = extra.remaining {
+                        Text("\(UsageModel.percent(remaining)) left").foregroundStyle(color(remaining))
+                    } else {
+                        Text("On").foregroundStyle(.green)
+                    }
+                }
+                .font(.subheadline.weight(.semibold))
+                .monospacedDigit()
+            }
+            if extra.isEnabled, let utilization = extra.utilization, let remaining = extra.remaining {
+                UsageBar(utilization: extra.limitReached ? 100 : utilization, color: color(remaining))
+            }
+            Group {
+                if extra.isEnabled {
+                    HStack {
+                        Text(spentText)
+                        Spacer()
+                        if extra.limitReached {
+                            Text("Limit reached").foregroundStyle(Color(nsColor: .usageLightRed))
+                        }
+                    }
+                } else {
+                    Text(extra.disabledReason.map(Self.humanize) ?? "Not enabled. Usage stops at your plan limits.")
+                }
+                if let balance = extra.balance {
+                    Text("Credit balance: \(balance.formatted)")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .monospacedDigit()
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var spentText: String {
+        let used = extra.used?.formatted ?? "Nothing"
+        guard let limit = extra.monthlyLimit else { return "\(used) spent this month · no monthly limit" }
+        return "\(used) of \(limit.formatted) monthly limit used"
+    }
+
+    private func color(_ remaining: Double) -> Color {
+        UsageLevel(remaining: remaining).popoverColor
+    }
+
+    /// `org_disabled` → "Org disabled".
+    private static func humanize(_ reason: String) -> String {
+        let text = reason.replacingOccurrences(of: "_", with: " ")
+        return text.prefix(1).uppercased() + text.dropFirst()
+    }
+}
+
+/// Drawn by hand: ProgressView ignores `.tint` when the popover isn't the key window.
+private struct UsageBar: View {
+    let utilization: Double
+    let color: Color
+
+    var body: some View {
+        Capsule()
+            .fill(.quaternary)
+            .frame(height: 6)
+            .overlay(alignment: .leading) {
+                GeometryReader { geometry in
+                    Capsule()
+                        .fill(color)
+                        .frame(width: geometry.size.width * max(0, min(utilization, 100)) / 100)
+                }
+            }
     }
 }
 
